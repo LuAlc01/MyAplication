@@ -122,7 +122,7 @@ fun Principio(){
             )
             Spacer(modifier = Modifier.height(16.dp)) //import dp
             Text(
-                text = "U NIGGAS",
+                text = "TITILO APP",
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 24.sp, //import sp
                 textAlign = TextAlign.Center
