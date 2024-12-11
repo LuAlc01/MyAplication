@@ -262,7 +262,7 @@ MyApplicationTheme {
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
-            }
+            } a ver si ahora si
  */
 
 
