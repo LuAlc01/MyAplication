@@ -301,7 +301,6 @@ MyApplicationTheme {
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
-            } otraaaa
  */
 
 
