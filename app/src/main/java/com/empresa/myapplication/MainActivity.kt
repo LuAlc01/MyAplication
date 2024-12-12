@@ -10,11 +10,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
@@ -51,6 +53,15 @@ import com.empresa.myapplication.ui.theme.MyApplicationTheme
 import kotlinx.coroutines.delay
 import org.w3c.dom.Text
 import kotlin.concurrent.thread
+import kotlin.collections.List
+import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Text
+import androidx.compose.ui.unit.dp
+
+
 
 data class BarraNavegacion(
     val titulo: String,
@@ -209,7 +220,7 @@ fun MenuOpciones(){
         ){
             when (selectedItemIndex){
                 0 -> PantallaPrincipal()
-                1 -> PantallaPosts()
+                1 -> PostsLista()
                 2 -> PantallaAjustes()
                 else -> throw IllegalStateException ("Indice inesperado: $selectedItemIndex")
                 //Text("Ajustes Screen", modifier = Modifier.padding(it))
@@ -245,6 +256,31 @@ fun PantallaPrincipal(){
     }
 }
 
+
+@Composable
+fun PostsLista(){
+    val posts = List(10) {"Post número ${it+1}"}   //el it es un índice como el i en java el +1 hace que sea de 1 a 10 en vez de 0 a 9
+    LazyColumn (
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp), //espacio entre elementos
+        contentPadding = PaddingValues(16.dp) //Espaciado general de la lista margen.
+    ) {
+        //Espacio inicial antes de los posts
+        item {
+            Spacer(modifier = Modifier.height(50.dp)) //espacio a dar para mas espacio desde arriba.
+        }
+        items(posts) { post ->
+            Text(
+                text = post,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(8.dp) //espacio interno de texto.
+            )
+        }
+    }
+}
+
+
+
 @Preview(showBackground = true)
 @Composable
 fun PreviewPantalla(){
@@ -252,6 +288,9 @@ fun PreviewPantalla(){
         Principio()
     }
 }
+
+
+
 
 /*
 
