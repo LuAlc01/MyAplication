@@ -2,6 +2,7 @@ package com.empresa.myapplication
 
 import android.R.attr.contentDescription
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -61,6 +62,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.ui.unit.dp
 
+//Imports del estado de Activity, los LOGS, aqui tambien va el Bundle y componentActivity
+import android.util.Log
+
+
 
 
 data class BarraNavegacion(
@@ -71,13 +76,18 @@ data class BarraNavegacion(
     val contadorBadges: Int? = null //el ? hace que una variable pueda ser null //corresponde al numero de mensajes/notis
 )
 //Añadire mas iconos con una dependencia que hay que buscar (aún no implementada)
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity() { //linea 307
+
+    private val TAG = "ActivityLifeCycle"  //TAG Asociado a la actividad creada para no escribir sempre lo mismo.
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        super.onCreate(savedInstanceState)//Empieza
+        Log.d(TAG, "onCreate: Activity creada")
         Thread.sleep(2000)
         installSplashScreen()
         enableEdgeToEdge()
-        setContent {
+        setContent { //Acaba,   Hasta aquí es la declaracion de nuestra actividad, y declaramos el Entorno en el que se creara lo que haya en el Compose de abajo
             MyApplicationTheme {
                 var mostrarPrincipio by rememberSaveable { mutableStateOf(true) }
 
@@ -96,6 +106,54 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onStart() {
+        super.onStart()
+        Log.d(TAG, "onStart: Activity visible")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "onResume: Usuario puede interactuar con la Activity")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d(TAG, "onPause: Activity parcialmente visible")
+    }
+
+    override fun onStop(){
+        super.onStop()
+        Log.d(TAG, "onStop: Activity ya no es visible")
+    }
+
+    override fun onDestroy(){
+        super.onDestroy()
+        Log.d(TAG, "onDestroy: Activity destruida, recursos liberados")
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        Log.d(TAG, "onRestart: Activity reiniciada")
+    }
+
+    //Este extra es para la memoria
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        Log.d(TAG, "onTrimMemory: Nivel de memoria bajo: $level")
+    }
+
+    //Metodo que acompaña a los declarado en AndroidManifest que hace que la propia actividad, maneje esos datos, que luego personalizo logs en este metodo
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            Log.d(TAG, "Pantalla en modo horizontal")
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+           Log.d(TAG, "Pantalla en modo vertical")
+        }
+    }
+
 }
 
 @Composable
@@ -303,5 +361,57 @@ MyApplicationTheme {
                 }
  */
 
+
+/*Actividad:
+Es una contenedor de una o más pantallas, mejor dicho, una Unidad de la app donde los usuarios interactúan
+y es por eso que se llaman actividades, que tendrán información:
+ * Si está en segundo plano
+ * Punto de entrada, por ejemplo, si el usuario entra a al APP desde el navegador,  Es decir, una Activity es un componente que inicia la app directamente
+...
+
+las d en los logs
+
+Niveles de prioridad en Log
+
+Android proporciona los siguientes niveles de prioridad para clasificar los mensajes de log:
+
+    Log.v (Verbose):
+        Prioridad más baja.
+        Se utiliza para mensajes muy detallados que podrían ser excesivos en la mayoría de las circunstancias.
+        Ejemplo: Log.v(TAG, "Mensaje muy detallado").
+
+    Log.d (Debug):
+        Se utiliza para mensajes de depuración.
+        Son útiles para entender el flujo de la aplicación y diagnosticar problemas durante el desarrollo.
+        Ejemplo: Log.d(TAG, "Variable valorX tiene: $valorX").
+
+    Log.i (Info):
+        Nivel informativo.
+        Se usa para mensajes generales sobre el estado de la aplicación.
+        Ejemplo: Log.i(TAG, "Conexión establecida con éxito").
+
+    Log.w (Warning):
+        Indica que algo inesperado ocurrió, pero no es un problema grave.
+        Ejemplo: Log.w(TAG, "El servidor tardó demasiado en responder").
+
+    Log.e (Error):
+        Prioridad alta.
+        Indica que ha ocurrido un error que probablemente necesita atención inmediata.
+        Ejemplo: Log.e(TAG, "Error al conectar con la base de datos").
+
+    Log.wtf (What a Terrible Failure):
+        Nivel más crítico.
+        Se utiliza para situaciones que no deberían ocurrir bajo ninguna circunstancia.
+        Ejemplo: Log.wtf(TAG, "¡Estado imposible alcanzado!").
+
+
+EN LOGCAT, se ve con la palabra clave ActivityLifecycle que es el TAG.
+Al rotar la pantalla, se hace un cambio de configuración, por lo que se relanza la actividad, aunque no lo veamos,
+Vamos a modificar el manifest de android, para que al rotar, haya un log específico que lo indique, para tener más información y entendible.
+
+
+
+
+ */
 
 

@@ -14,14 +14,18 @@
         tools:targetApi="31" >
         <activity
             android:name=".MainActivity"
+            android:configChanges="orientation|screenSize"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.App.SplashScreen" > <!-- Nuestro tema creado en themes.xml , arriba en android theme, añadi el base. -->
+            <!--  android:configChanges="orientation|screenSize" atributo para registrar giros de pantalla, y no reinicie ahora metodo 146 "Pantalla en modo horizontal"
+            para otras cosas como el idioma y tal, tengo que ir añadiendo | al android configChanges-->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
     </application>
 
