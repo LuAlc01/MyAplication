@@ -2,6 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" >
 
+    <!-- Primeros pasos de permisos-->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -16,7 +23,6 @@
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.App.SplashScreen" > <!-- Nuestro tema creado en themes.xml , arriba en android theme, añadi el base. -->
             <!--  android:configChanges="orientation|screenSize" atributo para registrar giros de pantalla, y no reinicie ahora metodo 146 "Pantalla en modo horizontal"
             para otras cosas como el idioma y tal, tengo que ir añadiendo | al android configChanges-->
@@ -30,3 +36,5 @@
     </application>
 
 </manifest>
+
+    <!--Linea 10, android:label="@string/app_name" nombre sea un recurso que puedes cambiar fácilmente (en diferentes idiomas), aunque ahora el nombre de la aplicación debe estar definido en el archivo res/values/strings.xml -->

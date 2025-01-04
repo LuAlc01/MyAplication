@@ -2,6 +2,7 @@ package com.empresa.myapplication
 
 import android.R.attr.contentDescription
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -64,8 +65,16 @@ import androidx.compose.ui.unit.dp
 
 //Imports del estado de Activity, los LOGS, aqui tambien va el Bundle y componentActivity
 import android.util.Log
+import androidx.core.content.ContextCompat
 
+//permisos
+import android.Manifest
+import android.app.Activity
 
+//Cuadro permisos
+import android.os.Build //veridicador de versiones android
+import android.widget.Toast
+import androidx.core.app.ActivityCompat //Este comprueba y verifica permisos.
 
 
 data class BarraNavegacion(
@@ -80,6 +89,7 @@ class MainActivity : ComponentActivity() { //linea 307
 
     private val TAG = "ActivityLifeCycle"  //TAG Asociado a la actividad creada para no escribir sempre lo mismo.
 
+    private  val REQUEST_STORAGE_PERMISSION = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)//Empieza
@@ -87,6 +97,12 @@ class MainActivity : ComponentActivity() { //linea 307
         Thread.sleep(2000)
         installSplashScreen()
         enableEdgeToEdge()
+
+        //Quiero que revise los permisos mientras "Crea" el proceso de la APP
+        if (!TienepermisoAlmacen()){
+            solicitarpermisoAlmacen()
+        }
+
         setContent { //Acaba,   Hasta aquí es la declaracion de nuestra actividad, y declaramos el Entorno en el que se creara lo que haya en el Compose de abajo
             MyApplicationTheme {
                 var mostrarPrincipio by rememberSaveable { mutableStateOf(true) }
@@ -107,6 +123,8 @@ class MainActivity : ComponentActivity() { //linea 307
         }
     }
 
+
+    //tema LOGS
     override fun onStart() {
         super.onStart()
         Log.d(TAG, "onStart: Activity visible")
@@ -154,7 +172,73 @@ class MainActivity : ComponentActivity() { //linea 307
         }
     }
 
-}
+
+    //Apartado permisos verificable en LOGCAT con ActivityLifeCycle
+    private fun TienepermisoAlmacen(): Boolean{
+        //Para android 10 y superiors, no necesito permisos de escritura.
+        val permisoConcedido = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+            true // Scoped Storage no requiere WRITE_EXTERNAL_STORAGE
+        } else {
+            //El metodo si que aplica a todas las verisones, esto complementa la modificacion dl android manifest.
+            ContextCompat.checkSelfPermission(
+                this, Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+        }
+        Log.d(TAG, "TienepermisoAlmacen: Permiso concedido = $permisoConcedido")
+        return permisoConcedido
+    }
+
+
+    private fun solicitarpermisoAlmacen() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    this, Manifest.permission.READ_EXTERNAL_STORAGE
+                )
+            ) {
+                Toast.makeText(
+                    this,
+                    "El permiso es necesario para acceder a archivos públicos.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                REQUEST_STORAGE_PERMISSION
+            )
+        } else {
+            Toast.makeText(
+                this,
+                "Scoped Storage está habilitado, no se necesitan permisos adicionales.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    //MOdiifcacion metodo de cuadricula.
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String?>,
+        grantResults: IntArray,
+        deviceId: Int
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults, deviceId) //Hasta aqui generado auto
+        if (requestCode == REQUEST_STORAGE_PERMISSION){
+            if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                Toast.makeText(this,"Permiso otorgado, Gracias!", Toast.LENGTH_SHORT).show()
+            }else{
+                Toast.makeText(this,"Permiso denegado, No aprovecharas todas las funciones", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+
+} // Fin clase MainActivity
+
+
+
+
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
@@ -191,7 +275,7 @@ fun Principio(){
             )
             Spacer(modifier = Modifier.height(16.dp)) //import dp
             Text(
-                text = "TITILO APP",
+                text = "Assistance cloud",
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 24.sp, //import sp
                 textAlign = TextAlign.Center
@@ -408,7 +492,7 @@ Android proporciona los siguientes niveles de prioridad para clasificar los mens
 EN LOGCAT, se ve con la palabra clave ActivityLifecycle que es el TAG.
 Al rotar la pantalla, se hace un cambio de configuración, por lo que se relanza la actividad, aunque no lo veamos,
 Vamos a modificar el manifest de android, para que al rotar, haya un log específico que lo indique, para tener más información y entendible.
-
+Ahora tambien si hay permisos.
 
 
 
