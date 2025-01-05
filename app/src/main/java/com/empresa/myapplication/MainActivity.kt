@@ -77,6 +77,22 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat //Este comprueba y verifica permisos.
 
 
+
+
+//imports Base de Datos
+
+// Crear entidad
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+//DAO, para hacer las querys.
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
+
+
+
+
 data class BarraNavegacion(
     val titulo: String,
     val iconoSeleccionado: ImageVector,
@@ -239,7 +255,6 @@ class MainActivity : ComponentActivity() { //linea 307
 
 
 
-
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
@@ -283,9 +298,6 @@ fun Principio(){
         }
     }
 }
-
-
-
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -430,6 +442,14 @@ fun PreviewPantalla(){
         Principio()
     }
 }
+
+
+
+
+
+
+
+
 
 
 

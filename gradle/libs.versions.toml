@@ -10,6 +10,7 @@ activityCompose = "1.9.3"
 composeBom = "2024.04.01"
 splashscreen = "1.0.0"
 
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -29,6 +30,8 @@ androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", versi
 room-runtime = { group = "androidx.room", name = "room-runtime", version = "2.6.1" }
 room-ktx = { group = "androidx.room", name = "room-ktx", version = "2.6.1" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version = "2.6.1" }
+core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "splashscreen" }
+
 
 
 [plugins]
