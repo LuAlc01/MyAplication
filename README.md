@@ -2,7 +2,7 @@
 
 Descripción
 
-[NOMBRE SIN DECIDOR] 
+ASSISTANCE CLOUD  
 
 1.OPCIÓN
 es una aplicación diseñada para brindar ayuda tecnológica a personas mayores en dos áreas principales:
