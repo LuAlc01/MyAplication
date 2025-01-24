@@ -1,4 +1,4 @@
-package com.empresa.myapplication
+package com.empresa.myapplication.Database
 
 //IMport entidad
 import androidx.room.Entity
@@ -18,7 +18,7 @@ import androidx.room.RoomDatabase
 
 
 
-//Esta es la marca la clase como uan entia e la base de datos.
+//Esta es la marca la clase como uan entia e la base de datos. crea una tabla por cada clase que tenga @entity notacion
 @Entity(tableName = "post")
 data class Post(
     //Es la clave priparia , al estar en autogenrate, creará un id automaticamente y único para cada post.

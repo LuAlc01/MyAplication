@@ -74,6 +74,7 @@ import android.app.Activity
 //Cuadro permisos
 import android.os.Build //veridicador de versiones android
 import android.widget.Toast
+import androidx.compose.runtime.remember
 import androidx.core.app.ActivityCompat //Este comprueba y verifica permisos.
 
 
@@ -89,8 +90,11 @@ import androidx.room.PrimaryKey
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-
-
+import androidx.room.Room
+import com.empresa.myapplication.Database.Post
+import com.empresa.myapplication.Database.PostDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
 data class BarraNavegacion(
@@ -102,6 +106,7 @@ data class BarraNavegacion(
 )
 //Añadire mas iconos con una dependencia que hay que buscar (aún no implementada)
 class MainActivity : ComponentActivity() { //linea 307
+    private lateinit var postDatabase: PostDatabase //AQUI DATABASE declarada
 
     private val TAG = "ActivityLifeCycle"  //TAG Asociado a la actividad creada para no escribir sempre lo mismo.
 
@@ -114,6 +119,22 @@ class MainActivity : ComponentActivity() { //linea 307
         installSplashScreen()
         enableEdgeToEdge()
 
+        //inicializar la base de datos
+        try {
+            Log.d(TAG, "Inicializando la base de datos...")
+            postDatabase = Room.databaseBuilder(
+                applicationContext,
+                PostDatabase::class.java,
+                "post-database"
+            ).fallbackToDestructiveMigration().build()
+            Log.d(TAG, "Base de datos inicializada correctamente")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al inicializar la base de datos: ${e.message}")
+            e.printStackTrace()
+        }
+
+        // ACCESO A BASE DE DATOS EN LA COMPOSABLE 'PostsLista'
+
         //Quiero que revise los permisos mientras "Crea" el proceso de la APP
         if (!TienepermisoAlmacen()){
             solicitarpermisoAlmacen()
@@ -122,6 +143,7 @@ class MainActivity : ComponentActivity() { //linea 307
         setContent { //Acaba,   Hasta aquí es la declaracion de nuestra actividad, y declaramos el Entorno en el que se creara lo que haya en el Compose de abajo
             MyApplicationTheme {
                 var mostrarPrincipio by rememberSaveable { mutableStateOf(true) }
+
 
                 //Transicion
                 LaunchedEffect(Unit) {
@@ -133,7 +155,7 @@ class MainActivity : ComponentActivity() { //linea 307
                     Principio()
                 }
                 else{
-                    MenuOpciones()
+                    MenuOpciones(postDatabase)
                 }
             }
         }
@@ -302,58 +324,56 @@ fun Principio(){
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun MenuOpciones(){
+fun MenuOpciones(postDatabase: PostDatabase) {
     val items = listOf(
         BarraNavegacion(
             titulo = "Home",
-            iconoSeleccionado = Icons.Filled.Home, //La propiedad filled, hace que el icono se "rellene" cuando lo seleccionas
+            iconoSeleccionado = Icons.Filled.Home,
             iconoNoSeleccionado = Icons.Outlined.Home,
-            notis = false,
+            notis = false
         ),
         BarraNavegacion(
             titulo = "Posts",
             iconoSeleccionado = Icons.Filled.Info,
             iconoNoSeleccionado = Icons.Outlined.Info,
             notis = false,
-            contadorBadges = 45  //Esto es un ejemplo de lo que quiero que salga. Gutura implemntacion saber el numero real de notis
+            contadorBadges = 45
         ),
         BarraNavegacion(
             titulo = "Ajustes",
             iconoSeleccionado = Icons.Filled.Settings,
             iconoNoSeleccionado = Icons.Outlined.Settings,
-            notis = true, //Aquí creamos el ejemplo de que tengas que hacer algo en la cuenta, actualizar app....
+            notis = true
         )
     )
-    var selectedItemIndex by rememberSaveable {
-        mutableStateOf(0)
-    }
+
+    var selectedItemIndex by rememberSaveable { mutableStateOf(0) }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
-    ){
-        Scaffold (
+    ) {
+        Scaffold(
             bottomBar = {
                 NavigationBar {
                     items.forEachIndexed { index, item ->
-
                         NavigationBarItem(
                             selected = selectedItemIndex == index,
                             onClick = {
                                 selectedItemIndex = index
-                                //navController.navigate(item.titulo)
                             },
                             label = {
                                 Text(text = item.titulo)
                             },
-                            alwaysShowLabel = false, //
+                            alwaysShowLabel = false,
                             icon = {
                                 BadgedBox(
                                     badge = {
-                                        if(item.contadorBadges != null) {
+                                        if (item.contadorBadges != null) {
                                             Badge {
                                                 Text(text = item.contadorBadges.toString())
                                             }
-                                        } else if(item.notis) {
+                                        } else if (item.notis) {
                                             Badge()
                                         }
                                     }
@@ -368,20 +388,19 @@ fun MenuOpciones(){
                             }
                         )
                     }
-
                 }
             }
-        ){
-            when (selectedItemIndex){
+        ) {
+            when (selectedItemIndex) {
                 0 -> PantallaPrincipal()
-                1 -> PostsLista()
+                1 -> PostsLista(postDatabase)  // Pasa la base de datos a la pantalla de posts
                 2 -> PantallaAjustes()
-                else -> throw IllegalStateException ("Indice inesperado: $selectedItemIndex")
-                //Text("Ajustes Screen", modifier = Modifier.padding(it))
+                else -> throw IllegalStateException("Índice inesperado: $selectedItemIndex")
             }
         }
     }
 }
+
 @Composable
 fun PantallaPosts(){
     Box(
@@ -412,26 +431,39 @@ fun PantallaPrincipal(){
 
 
 @Composable
-fun PostsLista(){
-    val posts = List(10) {"Post número ${it+1}"}   //el it es un índice como el i en java el +1 hace que sea de 1 a 10 en vez de 0 a 9
-    LazyColumn (
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp), //espacio entre elementos
-        contentPadding = PaddingValues(16.dp) //Espaciado general de la lista margen.
-    ) {
-        //Espacio inicial antes de los posts
-        item {
-            Spacer(modifier = Modifier.height(50.dp)) //espacio a dar para mas espacio desde arriba.
+fun PostsLista(postDatabase: PostDatabase) {
+    var posts by remember { mutableStateOf<List<Post>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+
+    // Recuperación de datos desde la base de datos
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            val postDao = postDatabase.postDao()// Obteniendo el DAO
+            posts = postDao.obtenerTodosLosPosts() // Cargando todos los posts
+            loading = false
         }
-        items(posts) { post ->
-            Text(
-                text = post,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(8.dp) //espacio interno de texto.
-            )
+    }
+
+    if (loading) {
+        Text("Cargando...")
+    } else {
+        // Visualización de la lista de posts
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(16.dp)
+        ) {
+            items(posts) { post ->
+                Text(
+                    text = post.titulo, // Titulo de cada post cargado desde la BD
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
         }
     }
 }
+
 
 
 

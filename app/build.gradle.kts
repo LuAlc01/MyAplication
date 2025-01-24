@@ -72,4 +72,21 @@ dependencies {
 
     //
 
+    // Navigation Component
+    implementation(libs.navigation.fragment.ktx)
+    implementation(libs.navigation.ui.ktx)
+
+    // Room components
+    androidTestImplementation(libs.room.testing)
+
+    // Lifecycle components
+    implementation(libs.lifecycle.extensions)
+    implementation(libs.lifecycle.common.java8)
+    implementation(libs.lifecycle.viewmodel.ktx)
+
+    // Kotlin components
+    implementation(libs.kotlin.stdlib)
+    api(libs.kotlin.coroutines.core)
+    api(libs.kotlin.coroutines.android)
+
 }
