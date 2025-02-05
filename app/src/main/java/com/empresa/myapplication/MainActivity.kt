@@ -429,33 +429,50 @@ fun PantallaPrincipal(){
     }
 }
 
-
+//comentar
 @Composable
 fun PostsLista(postDatabase: PostDatabase) {
+    // Se utiliza un estado local para manejar la lista de posts, el estado de carga y si ocurrió un error.
     var posts by remember { mutableStateOf<List<Post>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf(false) }
 
-    // Recuperación de datos desde la base de datos
+    // Recuperación de datos desde la base de datos en un hilo separado.
     LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            val postDao = postDatabase.postDao()// Obteniendo el DAO
-            posts = postDao.obtenerTodosLosPosts() // Cargando todos los posts
-            loading = false
+        try {
+            // Usamos withContext para cambiar a un hilo de fondo (IO) para no bloquear el hilo principal.
+            withContext(Dispatchers.IO) {
+                val postDao = postDatabase.postDao() // Se obtiene el DAO de la base de datos.
+                posts = postDao.obtenerTodosLosPosts() // Se cargan todos los posts desde la BD.
+                loading = false // Una vez que los posts son cargados, se cambia el estado de carga.
+            }
+        } catch (e: Exception) {
+            // Si ocurre un error al cargar los posts, se maneja el error y se marca el estado de error como true.
+            error = true
+            loading = false // Se indica que la carga ha terminado, aunque haya ocurrido un error.
+            Log.e("PostsLista", "Error al cargar los posts", e) // Se loguea el error.
         }
     }
 
+    // Dependiendo del estado de carga y error, mostramos diferentes mensajes o la lista de posts.
     if (loading) {
-        Text("Cargando...")
+        // Muestra un texto indicando que los posts se están cargando.
+        Text("Cargando...", style = MaterialTheme.typography.bodyLarge)
+    } else if (error) {
+        // Si ocurrió un error al cargar los posts, se muestra un mensaje de error.
+        Text("Error al cargar los posts", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.error)
     } else {
-        // Visualización de la lista de posts
+        // Si  está bien, mostramos la lista de posts en una LazyColumn.
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(16.dp)
         ) {
+            // Recorremos la lista de posts y mostramos cada uno en la columna.
             items(posts) { post ->
+                // Muestra el título de cada post.
                 Text(
-                    text = post.titulo, // Titulo de cada post cargado desde la BD
+                    text = post.titulo, // Titulo de cada post cargado desde la BD.
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(8.dp)
                 )

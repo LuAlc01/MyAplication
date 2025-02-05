@@ -16,6 +16,11 @@ lifecycle = "2.2.0"
 kotlin-coroutines = "1.7.3"
 kotlin-stdlib = "1.9.20"
 
+
+hilt = "2.44"  # Puedes elegir la versión que necesites, la más reciente es 2.44
+kotlin-ksp = "1.10.0-2.0.0"
+
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -56,6 +61,9 @@ kotlin-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-co
 kotlin-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlin-coroutines" }
 
 
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
+hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -63,4 +71,6 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 kotlin-ksp = { id = "com.google.devtools.ksp", version = "2.1.0-1.0.29" }
+
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 

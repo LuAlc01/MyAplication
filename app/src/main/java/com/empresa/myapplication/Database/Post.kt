@@ -1,6 +1,7 @@
 package com.empresa.myapplication.Database
 
 //IMport entidad
+import android.content.Context
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -15,7 +16,12 @@ import androidx.room.Query
 import androidx.room.*
 
 import androidx.room.RoomDatabase
-
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
 
 //Esta es la marca la clase como uan entia e la base de datos. crea una tabla por cada clase que tenga @entity notacion
@@ -62,3 +68,28 @@ abstract class PostDatabase : RoomDatabase(){
 }
 
 //Aqui esta el commit al que me refiero https://github.com/LuAlc01/MyAplication/commit/57794bd23367c490a05950024b099874d7e1185e
+
+
+//Configuramos un módulo Hilt para proporcionar la instancia de Retrofit.
+//Lo hacemos en singleton para dar prioridad y así evitar errores
+@Module
+@InstallIn(SingletonComponent::class)
+object DatabaseModule {
+
+    @Provides
+    @Singleton
+    fun provideDatabase(@ApplicationContext context: Context): PostDatabase {
+        return Room.databaseBuilder(
+            context,
+            PostDatabase::class.java,
+            "post_database"
+        ).fallbackToDestructiveMigration()  // Esto puede ser útil en caso de cambios en la versión de la base de datos
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun providePostDao(database: PostDatabase): PostDao {
+        return database.postDao()
+    }
+}

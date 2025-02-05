@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.ksp)
+    alias(libs.plugins.hilt)
 }
 
 android {
@@ -89,4 +90,8 @@ dependencies {
     api(libs.kotlin.coroutines.core)
     api(libs.kotlin.coroutines.android)
 
+
+    //hilt
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
 }
