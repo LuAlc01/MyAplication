@@ -4,54 +4,79 @@ package com.empresa.myapplication.PostViewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.empresa.myapplication.Cases.DeletePostUseCase
+import com.empresa.myapplication.Cases.GetPostsUseCase
+import com.empresa.myapplication.Cases.InsertPostUseCase
+import com.empresa.myapplication.Cases.UpdatePostUseCase
 import com.empresa.myapplication.Database.Post
 import com.empresa.myapplication.Database.PostDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// Anotación Hilt para inyectar dependencias en el ViewModel
 @HiltViewModel
 class PostViewModel @Inject constructor(
-    private val postDao: PostDao
+    private val postDao: PostDao,
+    private val getPostsUseCase: GetPostsUseCase,
+    private val insertPostUseCase: InsertPostUseCase,
+    private val updatePostUseCase: UpdatePostUseCase,
+    private val deletePostUseCase: DeletePostUseCase
 ) : ViewModel() {
 
-    // MutableStateFlow para manejar los datos de los posts
+    // StateFlow para almacenar la lista de posts
     private val _posts = MutableStateFlow<List<Post>>(emptyList())
-    val posts: StateFlow<List<Post>> = _posts
+    val posts: StateFlow<List<Post>> = _posts.asStateFlow()
 
-    // Función para obtener todos los posts de la base de datos
-    fun getAllPosts() {
+    // StateFlow para manejar errores
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    // Cargar los posts desde la base de datos
+    fun loadPosts() {
         viewModelScope.launch {
-            // Usamos el DAO para obtener los datos de la base de datos de manera asincrónica
-            _posts.value = postDao.obtenerTodosLosPosts()
+            try {
+                getPostsUseCase().collect { postList ->
+                    _posts.value = postList
+                }
+            } catch (e: Exception) {
+                _error.value = "Error al cargar los posts: ${e.message}"
+            }
         }
     }
 
-    // Función para insertar un nuevo post en la base de datos
+    // Insertar un nuevo post
     fun insertPost(post: Post) {
         viewModelScope.launch {
-            postDao.insertarPost(post)
-            // Después de insertar, actualizamos los posts
-            getAllPosts()
+            try {
+                insertPostUseCase(post)
+            } catch (e: Exception) {
+                _error.value = "Error al insertar el post: ${e.message}"
+            }
         }
     }
 
-    // Función para actualizar un post
+    // Actualizar un post existente
     fun updatePost(post: Post) {
         viewModelScope.launch {
-            postDao.actualzarPost(post)
-            getAllPosts()
+            try {
+                deletePostUseCase(post)
+            } catch (e: Exception) {
+                _error.value = "Error al eliminar el post: ${e.message}"
+            }
         }
     }
 
-    // Función para eliminar un post
+    // Eliminar un post
     fun deletePost(post: Post) {
         viewModelScope.launch {
-            postDao.eliminarPost(post)
-            getAllPosts()
+            try {
+                deletePostUseCase(post)
+            } catch (e: Exception) {
+                _error.value = "Error al eliminar el post: ${e.message}"
+            }
         }
     }
 }

@@ -21,6 +21,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Singleton
 
 
@@ -45,7 +46,7 @@ interface PostDao{
 
     @Query("SELECT * FROM post")
     //Como su nombre indica, es la función para hacer consultas en la base de datos, aquí
-    suspend fun obtenerTodosLosPosts(): List<Post>
+     fun obtenerTodosLosPosts(): Flow<List<Post>>
 
     @Update
     suspend fun actualzarPost(post: Post)
@@ -62,8 +63,8 @@ interface PostDao{
 
 //abstract fun postDao(): devuleve una instancia del DAO PostDao, que contiene las funciones necesarias para interactuar.
 
-@Database(entities = [Post::class], version = 1)
-abstract class PostDatabase : RoomDatabase(){
+@Database(entities = [Post::class], version = 1, exportSchema = false)
+abstract class PostDatabase : RoomDatabase() {
     abstract fun postDao(): PostDao
 }
 

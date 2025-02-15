@@ -1,10 +1,24 @@
 package com.empresa.myapplication
 
-import android.R.attr.contentDescription
+// Imports del estado de Activity, los LOGS, aquí también va el Bundle y ComponentActivity
+
+// Permisos
+
+// Cuadro permisos
+
+// Imports Base de Datos
+
+// Crear entidad
+
+// DAO, para hacer las queries.
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -19,6 +33,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
@@ -37,132 +52,76 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.empresa.myapplication.ui.theme.MyApplicationTheme
-import kotlinx.coroutines.delay
-import org.w3c.dom.Text
-import kotlin.concurrent.thread
-import kotlin.collections.List
-import androidx.compose.material3.Text
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Text
-import androidx.compose.ui.unit.dp
-
-//Imports del estado de Activity, los LOGS, aqui tambien va el Bundle y componentActivity
-import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-
-//permisos
-import android.Manifest
-import android.app.Activity
-
-//Cuadro permisos
-import android.os.Build //veridicador de versiones android
-import android.widget.Toast
-import androidx.compose.runtime.remember
-import androidx.core.app.ActivityCompat //Este comprueba y verifica permisos.
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.empresa.myapplication.PostViewModel.ChuckNorrisViewModel
+import com.empresa.myapplication.PostViewModel.PostViewModel
+import com.empresa.myapplication.ui.theme.MyApplicationTheme
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 
 
-
-
-//imports Base de Datos
-
-// Crear entidad
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
-//DAO, para hacer las querys.
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.Query
-import androidx.room.Room
-import com.empresa.myapplication.Database.Post
-import com.empresa.myapplication.Database.PostDatabase
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-
-
+// Data class para la barra de navegación
 data class BarraNavegacion(
     val titulo: String,
     val iconoSeleccionado: ImageVector,
     val iconoNoSeleccionado: ImageVector,
-    val notis: Boolean, //Si es true quiero que salga una bolita
-    val contadorBadges: Int? = null //el ? hace que una variable pueda ser null //corresponde al numero de mensajes/notis
+    val notis: Boolean, // Si es true, quiero que salga una bolita
+    val contadorBadges: Int? = null // El ? hace que una variable pueda ser null // Corresponde al número de mensajes/notis
 )
-//Añadire mas iconos con una dependencia que hay que buscar (aún no implementada)
-class MainActivity : ComponentActivity() { //linea 307
-    private lateinit var postDatabase: PostDatabase //AQUI DATABASE declarada
 
-    private val TAG = "ActivityLifeCycle"  //TAG Asociado a la actividad creada para no escribir sempre lo mismo.
-
-    private  val REQUEST_STORAGE_PERMISSION = 1
+@AndroidEntryPoint // Anotación para habilitar Hilt en la actividad
+class MainActivity : ComponentActivity() { // Línea 307
+    private val TAG = "ActivityLifeCycle"  // TAG asociado a la actividad creada para no escribir siempre lo mismo.
+    private val REQUEST_STORAGE_PERMISSION = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)//Empieza
+        super.onCreate(savedInstanceState) // Empieza
         Log.d(TAG, "onCreate: Activity creada")
         Thread.sleep(2000)
         installSplashScreen()
         enableEdgeToEdge()
 
-        //inicializar la base de datos
-        try {
-            Log.d(TAG, "Inicializando la base de datos...")
-            postDatabase = Room.databaseBuilder(
-                applicationContext,
-                PostDatabase::class.java,
-                "post-database"
-            ).fallbackToDestructiveMigration().build()
-            Log.d(TAG, "Base de datos inicializada correctamente")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error al inicializar la base de datos: ${e.message}")
-            e.printStackTrace()
-        }
-
-        // ACCESO A BASE DE DATOS EN LA COMPOSABLE 'PostsLista'
-
-        //Quiero que revise los permisos mientras "Crea" el proceso de la APP
-        if (!TienepermisoAlmacen()){
+        // Quiero que revise los permisos mientras "Crea" el proceso de la APP
+        if (!TienepermisoAlmacen()) {
             solicitarpermisoAlmacen()
         }
 
-        setContent { //Acaba,   Hasta aquí es la declaracion de nuestra actividad, y declaramos el Entorno en el que se creara lo que haya en el Compose de abajo
+        setContent { // Acaba, hasta aquí es la declaración de nuestra actividad, y declaramos el entorno en el que se creará lo que haya en el Compose de abajo
             MyApplicationTheme {
                 var mostrarPrincipio by rememberSaveable { mutableStateOf(true) }
 
-
-                //Transicion
+                // Transición
                 LaunchedEffect(Unit) {
                     delay(3000)
                     mostrarPrincipio = false
                 }
 
-                if (mostrarPrincipio){
+                if (mostrarPrincipio) {
                     Principio()
-                }
-                else{
-                    MenuOpciones(postDatabase)
+                } else {
+                    MenuOpciones() // Ya no pasamos postDatabase, Hilt lo maneja
                 }
             }
         }
     }
 
-
-    //tema LOGS
+    // Tema LOGS
     override fun onStart() {
         super.onStart()
         Log.d(TAG, "onStart: Activity visible")
@@ -178,12 +137,12 @@ class MainActivity : ComponentActivity() { //linea 307
         Log.d(TAG, "onPause: Activity parcialmente visible")
     }
 
-    override fun onStop(){
+    override fun onStop() {
         super.onStop()
         Log.d(TAG, "onStop: Activity ya no es visible")
     }
 
-    override fun onDestroy(){
+    override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "onDestroy: Activity destruida, recursos liberados")
     }
@@ -193,31 +152,29 @@ class MainActivity : ComponentActivity() { //linea 307
         Log.d(TAG, "onRestart: Activity reiniciada")
     }
 
-    //Este extra es para la memoria
-
+    // Este extra es para la memoria
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
         Log.d(TAG, "onTrimMemory: Nivel de memoria bajo: $level")
     }
 
-    //Metodo que acompaña a los declarado en AndroidManifest que hace que la propia actividad, maneje esos datos, que luego personalizo logs en este metodo
+    // funcion que acompaña a los declarados en AndroidManifest que hace que la propia actividad maneje esos datos, que luego personalizo logs en este método
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE){
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             Log.d(TAG, "Pantalla en modo horizontal")
         } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-           Log.d(TAG, "Pantalla en modo vertical")
+            Log.d(TAG, "Pantalla en modo vertical")
         }
     }
 
-
-    //Apartado permisos verificable en LOGCAT con ActivityLifeCycle
-    private fun TienepermisoAlmacen(): Boolean{
-        //Para android 10 y superiors, no necesito permisos de escritura.
-        val permisoConcedido = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+    // Apartado permisos verificable en LOGCAT con ActivityLifeCycle
+    private fun TienepermisoAlmacen(): Boolean {
+        // Para Android 10 y superiores, no necesito permisos de escritura.
+        val permisoConcedido = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             true // Scoped Storage no requiere WRITE_EXTERNAL_STORAGE
         } else {
-            //El metodo si que aplica a todas las verisones, esto complementa la modificacion dl android manifest.
+            // la funcion sí que aplica a todas las versiones, esto complementa la modificación del AndroidManifest.
             ContextCompat.checkSelfPermission(
                 this, Manifest.permission.READ_EXTERNAL_STORAGE
             ) == PackageManager.PERMISSION_GRANTED
@@ -225,7 +182,6 @@ class MainActivity : ComponentActivity() { //linea 307
         Log.d(TAG, "TienepermisoAlmacen: Permiso concedido = $permisoConcedido")
         return permisoConcedido
     }
-
 
     private fun solicitarpermisoAlmacen() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
@@ -254,6 +210,7 @@ class MainActivity : ComponentActivity() { //linea 307
         }
     }
 
+
     //MOdiifcacion metodo de cuadricula.
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -271,11 +228,7 @@ class MainActivity : ComponentActivity() { //linea 307
         }
     }
 
-
-} // Fin clase MainActivity
-
-
-
+}// Fin clase MainActivity
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
@@ -293,38 +246,38 @@ fun GreetingPreview() {
     }
 }
 
-//Mi pantalla de carga
+// Mi pantalla de carga
 @Composable
-fun Principio(){
+fun Principio() {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.primary
-    ){
+    ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
-        ){
+        ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription ="Imagen a presentar",
+                contentDescription = "Imagen a presentar",
                 modifier = Modifier.size(100.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp)) //import dp
+            ) // Cierre del Image
+            Spacer(modifier = Modifier.height(16.dp)) // Espaciador
             Text(
                 text = "Assistance cloud",
                 color = MaterialTheme.colorScheme.onPrimary,
-                fontSize = 24.sp, //import sp
+                fontSize = 24.sp,
                 textAlign = TextAlign.Center
             )
         }
     }
 }
 
-
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun MenuOpciones(postDatabase: PostDatabase) {
+fun MenuOpciones() {
+    val viewModel: PostViewModel = hiltViewModel()
     val items = listOf(
         BarraNavegacion(
             titulo = "Home",
@@ -393,7 +346,7 @@ fun MenuOpciones(postDatabase: PostDatabase) {
         ) {
             when (selectedItemIndex) {
                 0 -> PantallaPrincipal()
-                1 -> PostsLista(postDatabase)  // Pasa la base de datos a la pantalla de posts
+                1 -> PostsLista(viewModel)  // Pasa la base de datos a la pantalla de posts
                 2 -> PantallaAjustes()
                 else -> throw IllegalStateException("Índice inesperado: $selectedItemIndex")
             }
@@ -402,23 +355,29 @@ fun MenuOpciones(postDatabase: PostDatabase) {
 }
 
 @Composable
-fun PantallaPosts(){
+fun PantallaPosts() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
-    ){
+    ) {
         Text(text = "Posts", style = MaterialTheme.typography.titleLarge)
     }
 }
+
 @Composable
-fun PantallaAjustes(){
+fun PantallaAjustes() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
-    ){
+    ) {
         Text(text = "Ajustes", style = MaterialTheme.typography.titleLarge)
     }
 }
+
+
+
+
+
 @Composable
 fun PantallaPrincipal(){
     Box(
@@ -429,50 +388,79 @@ fun PantallaPrincipal(){
     }
 }
 
-//comentar
-@Composable
-fun PostsLista(postDatabase: PostDatabase) {
-    // Se utiliza un estado local para manejar la lista de posts, el estado de carga y si ocurrió un error.
-    var posts by remember { mutableStateOf<List<Post>>(emptyList()) }
-    var loading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf(false) }
 
-    // Recuperación de datos desde la base de datos en un hilo separado.
+
+//@Composable
+//fun PantallaPrincipal(viewModel: ChuckNorrisViewModel = hiltViewModel()) {
+//    // Observamos el StateFlow del chiste
+//    val joke by viewModel.joke.collectAsState()
+//    // Observamos el StateFlow de errores
+//    val error by viewModel.error.collectAsState()
+//
+//    // Cargamos un chiste aleatorio cuando el Composable se inicia
+//    LaunchedEffect(Unit) {
+//        viewModel.loadRandomJoke()
+//    }
+//
+//    Box(
+//        modifier = Modifier.fillMaxSize(),
+//        contentAlignment = Alignment.Center
+//    ) {
+//        if (true) {
+//            // Si hay un error, lo mostramos
+//            Text(
+//                text = error,
+//                style = MaterialTheme.typography.bodyLarge,
+//                color = MaterialTheme.colorScheme.error
+//            )
+//        } else if (true) {
+//            // Si hay un chiste, lo mostramos
+//            Text(
+//                text = joke,
+//                style = MaterialTheme.typography.bodyLarge,
+//                textAlign = TextAlign.Center,
+//                modifier = Modifier.padding(16.dp)
+//            )
+//        } else {
+//            // Si no hay chiste, mostramos un mensaje de carga
+//            Text("Cargando chiste...", style = MaterialTheme.typography.bodyLarge)
+//        }
+//    }
+//}
+
+@Composable
+fun PostsLista(viewModel: PostViewModel = hiltViewModel()) {
+    // Observamos el StateFlow de posts
+    val posts by viewModel.posts.collectAsState()
+    // Observamos el StateFlow de errores
+    val error by viewModel.error.collectAsState()
+
+    // Cargamos los posts cuando el Composable se inicia
     LaunchedEffect(Unit) {
-        try {
-            // Usamos withContext para cambiar a un hilo de fondo (IO) para no bloquear el hilo principal.
-            withContext(Dispatchers.IO) {
-                val postDao = postDatabase.postDao() // Se obtiene el DAO de la base de datos.
-                posts = postDao.obtenerTodosLosPosts() // Se cargan todos los posts desde la BD.
-                loading = false // Una vez que los posts son cargados, se cambia el estado de carga.
-            }
-        } catch (e: Exception) {
-            // Si ocurre un error al cargar los posts, se maneja el error y se marca el estado de error como true.
-            error = true
-            loading = false // Se indica que la carga ha terminado, aunque haya ocurrido un error.
-            Log.e("PostsLista", "Error al cargar los posts", e) // Se loguea el error.
-        }
+        viewModel.loadPosts()
     }
 
-    // Dependiendo del estado de carga y error, mostramos diferentes mensajes o la lista de posts.
-    if (loading) {
-        // Muestra un texto indicando que los posts se están cargando.
-        Text("Cargando...", style = MaterialTheme.typography.bodyLarge)
-    } else if (error) {
-        // Si ocurrió un error al cargar los posts, se muestra un mensaje de error.
-        Text("Error al cargar los posts", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.error)
+    // Mostramos la UI según el estado
+    if (error != null) {
+        // Si hay un error, lo mostramos
+        Text(
+            text = error!!,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.error
+        )
+    } else if (posts.isEmpty()) {
+        // Si no hay posts, mostramos un mensaje
+        Text("No hay posts disponibles", style = MaterialTheme.typography.bodyLarge)
     } else {
-        // Si  está bien, mostramos la lista de posts en una LazyColumn.
+        // Si hay posts, los mostramos en una LazyColumn
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(16.dp)
         ) {
-            // Recorremos la lista de posts y mostramos cada uno en la columna.
             items(posts) { post ->
-                // Muestra el título de cada post.
                 Text(
-                    text = post.titulo, // Titulo de cada post cargado desde la BD.
+                    text = post.titulo,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(8.dp)
                 )
@@ -480,6 +468,68 @@ fun PostsLista(postDatabase: PostDatabase) {
         }
     }
 }
+
+//comentar
+
+//@Composable
+//fun PostsLista(postDatabase: PostDatabase) {
+//    // Se utiliza un estado local para manejar la lista de posts, el estado de carga y si ocurrió un error.
+//    var posts by remember { mutableStateOf<List<Post>>(emptyList()) }
+//    var loading by remember { mutableStateOf(true) }
+//    var error by remember { mutableStateOf(false) }
+//
+//    // Recuperación de datos desde la base de datos en un hilo separado.
+//    LaunchedEffect(Unit) {
+//        try {
+//            // Usamos withContext para cambiar a un hilo de fondo (IO) para no bloquear el hilo principal.
+//            withContext(Dispatchers.IO) {
+//                val postDao = postDatabase.postDao() // Se obtiene el DAO de la base de datos.
+//                // Recolectamos el Flow y lo asignamos a `posts`.
+//                postDao.obtenerTodosLosPosts().collect { postList ->
+//                    posts = postList
+//                    loading =
+//                        false // Una vez que los posts son cargados, se cambia el estado de carga.
+//                }
+//            }
+//        } catch (e: Exception) {
+//            // Si ocurre un error al cargar los posts, se maneja el error y se marca el estado de error como true.
+//            error = true
+//            loading = false // Se indica que la carga ha terminado, aunque haya ocurrido un error.
+//            Log.e("PostsLista", "Error al cargar los posts", e) // Se loguea el error.
+//        }
+//    }
+//
+//    // Dependiendo del estado de carga y error, mostramos diferentes mensajes o la lista de posts.
+//    if (loading) {
+//        // Muestra un texto indicando que los posts se están cargando.
+//        Text("Cargando...", style = MaterialTheme.typography.bodyLarge)
+//    } else if (error) {
+//        // Si ocurrió un error al cargar los posts, se muestra un mensaje de error.
+//        Text(
+//            "Error al cargar los posts",
+//            style = MaterialTheme.typography.bodyLarge,
+//            color = MaterialTheme.colorScheme.error
+//        )
+//    } else {
+//        // Si está bien, mostramos la lista de posts en una LazyColumn.
+//        LazyColumn(
+//            modifier = Modifier.fillMaxSize(),
+//            verticalArrangement = Arrangement.spacedBy(8.dp),
+//            contentPadding = PaddingValues(16.dp)
+//        ) {
+//            // Recorremos la lista de posts y mostramos cada uno en la columna.
+//            items(posts) { post ->
+//                // Muestra el título de cada post.
+//                Text(
+//                    text = post.titulo, // Título de cada post cargado desde la BD.
+//                    style = MaterialTheme.typography.bodyLarge,
+//                    modifier = Modifier.padding(8.dp)
+//                )
+//            }
+//        }
+//    }
+//}
+
 
 
 
